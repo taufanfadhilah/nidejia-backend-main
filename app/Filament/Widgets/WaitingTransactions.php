@@ -42,7 +42,7 @@ class WaitingTransactions extends BaseWidget
                             Transaction::find($transaction->id)->update([
                                 'status' => 'approved'
                             ]);
-                            Notification::make()->success()->title('Transaction Approved!')->body('Transaction has been approved successfully')->icon('heroicon-o-check')->send();
+                            Notification::make()->success()->title('Transaction Approved!')->body('Transaction has been approved successfully')->icon('heroicon-o-check')->send()->toDatabase();
                         })
                         ->hidden(fn(Transaction $transaction) => $transaction->status !== 'waiting')
                 ]);
