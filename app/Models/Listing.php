@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Str;
 
@@ -40,5 +41,15 @@ class Listing extends Model
     {
         $this->attributes['title'] = $value;
         $this->attributes['slug'] = Str::slug($value);
+    }
+
+    /**
+     * Get all of the transaction for the Listing
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function transaction(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
     }
 }
