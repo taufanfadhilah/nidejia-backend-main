@@ -47,6 +47,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->databaseNotifications()
+            ->databaseNotificationsPolling('3s')
             ->authMiddleware([
                 Authenticate::class,
             ]);
