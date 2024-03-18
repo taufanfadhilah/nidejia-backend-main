@@ -23,45 +23,37 @@ class TransactionController extends Controller
 
     private function _fullyBookedChecker(Store $request)
     {
-        try {
-            $listing = Listing::find($request->listing_id);
-            $runningTransactionCount = Transaction::whereListingId($listing->id)
-                ->whereNot('status', 'cancelled')
-                ->where(function ($query) use ($request) {
-                    $query->whereBetween('start_date', [
+        $listing = Listing::find($request->listing_id);
+        $runningTransactionCount = Transaction::whereListingId($listing->id)
+            ->whereNot('status', 'cancelled')
+            ->where(function ($query) use ($request) {
+                $query->whereBetween('start_date', [
+                    $request->start_date,
+                    $request->end_date,
+                ])
+                    ->orWhereBetween('end_date', [
                         $request->start_date,
                         $request->end_date,
-                    ])
-                        ->orWhereBetween('end_date', [
-                            $request->start_date,
-                            $request->end_date,
-                        ])->orWhere(function ($subquery) use ($request) {
-                            $subquery->where('start_date', '<', $request->start_date)
-                                ->where('end_date', '>', $request->end_date);
-                        });
-                })
-                ->count();
+                    ])->orWhere(function ($subquery) use ($request) {
+                        $subquery->where('start_date', '<', $request->start_date)
+                            ->where('end_date', '>', $request->end_date);
+                    });
+            })
+            ->count();
 
-            if ($runningTransactionCount >= $listing->max_person) {
-                response()->json([
-                    'success' => false,
-                    'message' => 'Listing is fully booked',
-                ], JsonResponse::HTTP_NOT_ACCEPTABLE)->send();
-                die;
-            }
-
-            return true;
-        } catch (\Throwable $throwable) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Listing is fully booked',
-            ], JsonResponse::HTTP_NOT_ACCEPTABLE);
-        }
+        return $runningTransactionCount < $listing->max_person;
     }
 
-    public function isAvailable(Store $request): JsonResponse
+    public function isAvailable(Store $request)
     {
-        $this->_fullyBookedChecker($request);
+        $isAvailable = $this->_fullyBookedChecker($request);
+
+        if (!$isAvailable) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Listing is fully booked'
+            ], JsonResponse::HTTP_NOT_FOUND);
+        }
 
         return response()->json([
             'success' => true,
@@ -71,7 +63,14 @@ class TransactionController extends Controller
 
     public function store(Store $request): JsonResponse
     {
-        $this->_fullyBookedChecker($request);
+        $isAvailable = $this->_fullyBookedChecker($request);
+
+        if (!$isAvailable) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Listing is fully booked'
+            ], JsonResponse::HTTP_NOT_FOUND);
+        }
 
         $transaction = Transaction::create([
             'start_date' => $request->start_date,
