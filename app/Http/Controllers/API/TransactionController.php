@@ -26,6 +26,7 @@ class TransactionController extends Controller
         try {
             $listing = Listing::find($request->listing_id);
             $runningTransactionCount = Transaction::whereListingId($listing->id)
+                ->whereNot('status', 'cancelled')
                 ->where(function ($query) use ($request) {
                     $query->whereBetween('start_date', [
                         $request->start_date,
@@ -34,7 +35,10 @@ class TransactionController extends Controller
                         ->orWhereBetween('end_date', [
                             $request->start_date,
                             $request->end_date,
-                        ]);
+                        ])->orWhere(function ($subquery) use ($request) {
+                            $subquery->where('start_date', '<', $request->start_date)
+                                ->where('end_date', '>', $request->end_date);
+                        });
                 })
                 ->count();
 
