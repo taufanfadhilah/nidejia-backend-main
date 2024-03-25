@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Transaction\Store;
 use App\Models\Listing;
 use App\Models\Transaction;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 
 class TransactionController extends Controller
@@ -41,19 +42,21 @@ class TransactionController extends Controller
             })
             ->count();
 
-        return $runningTransactionCount < $listing->max_person;
+        if ($runningTransactionCount >= $listing->max_person) {
+            throw new HttpResponseException(
+                response()->json([
+                    'success' => false,
+                    'message' => 'Listing is fully booked',
+                ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY)
+            );
+        }
+
+        return true;
     }
 
     public function isAvailable(Store $request)
     {
-        $isAvailable = $this->_fullyBookedChecker($request);
-
-        if (!$isAvailable) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Listing is fully booked'
-            ], JsonResponse::HTTP_NOT_FOUND);
-        }
+        $this->_fullyBookedChecker($request);
 
         return response()->json([
             'success' => true,
@@ -63,14 +66,7 @@ class TransactionController extends Controller
 
     public function store(Store $request): JsonResponse
     {
-        $isAvailable = $this->_fullyBookedChecker($request);
-
-        if (!$isAvailable) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Listing is fully booked'
-            ], JsonResponse::HTTP_NOT_FOUND);
-        }
+        $this->_fullyBookedChecker($request);
 
         $transaction = Transaction::create([
             'start_date' => $request->start_date,

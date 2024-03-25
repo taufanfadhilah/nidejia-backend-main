@@ -49,21 +49,13 @@ class ListingResource extends Resource
                     ->required()
                     ->numeric()
                     ->default(0),
-                Forms\Components\TextInput::make('full_suppport_available')
-                    ->required()
-                    ->numeric()
+                Forms\Components\Checkbox::make('full_suppport_available')
                     ->default(0),
-                Forms\Components\TextInput::make('gym_area_available')
-                    ->required()
-                    ->numeric()
+                Forms\Components\Checkbox::make('gym_area_available')
                     ->default(0),
-                Forms\Components\TextInput::make('mini_cafe_available')
-                    ->required()
-                    ->numeric()
+                Forms\Components\Checkbox::make('mini_cafe_available')
                     ->default(0),
-                Forms\Components\TextInput::make('cinema_available')
-                    ->required()
-                    ->numeric()
+                Forms\Components\Checkbox::make('cinema_available')
                     ->default(0),
                 FileUpload::make('attachments')
                     ->directory('listings')
